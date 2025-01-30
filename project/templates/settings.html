@@ -148,13 +148,24 @@
             const formData = new FormData(this);
 
             try {
-                const response = await fetch('/api/settings/connection', {
+                const formObject = {};
+                formData.forEach((value, key) => {
+                    formObject[key] = value;
+                });
+
+                const response = await fetch('/api/settings/proxmox', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': getCsrfToken()
                     },
-                    body: new URLSearchParams(formData),
+                    body: JSON.stringify({
+                        hostname: formObject.host,
+                        port: formObject.port,
+                        username: formObject.username,
+                        password: formObject.password,
+                        verify_ssl: formObject.verify_ssl === 'on'
+                    }),
                     credentials: 'same-origin'
                 });
 
@@ -231,6 +242,40 @@
         // Load existing settings
         loadSettings();
     });
+
+    async function checkConnectionStatus() {
+        try {
+            const response = await fetch('/api/connection-status', {
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.querySelector('.status-text');
+                
+                if (data.connected) {
+                    statusDot.classList.add('connected');
+                    statusDot.classList.remove('disconnected');
+                    statusText.textContent = 'Connected';
+                } else {
+                    statusDot.classList.add('disconnected');
+                    statusDot.classList.remove('connected');
+                    statusText.textContent = data.error || 'Disconnected';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking connection status:', error);
+            const statusDot = document.querySelector('.status-dot');
+            const statusText = document.querySelector('.status-text');
+            statusDot.classList.add('disconnected');
+            statusDot.classList.remove('connected');
+            statusText.textContent = 'Connection Error';
+        }
+    }
 
     async function loadSettings() {
         try {

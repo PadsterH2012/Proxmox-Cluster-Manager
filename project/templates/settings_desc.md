@@ -10,13 +10,13 @@ The settings page provides a clean, organized interface for managing Proxmox Clu
 
 ### Tab Navigation
 Three main tabs organize different settings categories:
-1. Connection
-2. Maintenance
-3. Notifications
+1. Proxmox Connection
+2. Maintenance Settings
+3. Backup & Restore Config
 
 ## Tab Contents
 
-### Connection Tab
+### Proxmox Connection Tab
 Primary configuration for Proxmox VE access:
 - Proxmox Host input field
 - Port number (default: 8006)
@@ -24,22 +24,22 @@ Primary configuration for Proxmox VE access:
 - SSL verification toggle
 - Save button with automatic connection testing
 
-### Maintenance Tab
+### Maintenance Settings Tab
 System maintenance configuration:
 - Update check interval (hours)
 - Metrics collection interval (minutes)
 - Automatic VM migration toggle
 - Save button for maintenance preferences
 
-### Notifications Tab
-Email notification preferences:
-- Email notifications toggle
-- Email address input
-- Notification type checkboxes:
-  - Updates Available
-  - VM Migrations
-  - System Errors
-- Save button for notification settings
+### Backup & Restore Config Tab
+Configuration backup and restore functionality:
+- Backup section:
+  - Download current configuration as JSON
+  - Includes all settings (connection, maintenance)
+- Restore section:
+  - Upload previously saved configuration file
+  - Automatic validation of backup file
+  - Restores all settings with confirmation
 
 ## Theme and Styling
 - Dark theme matching dashboard
@@ -57,3 +57,4 @@ Email notification preferences:
 - Automatic settings persistence
 - Error handling with user feedback
 - CSRF protection on all forms
+- Configuration backup/restore system

@@ -53,9 +53,9 @@ A modern web application for monitoring Proxmox VE clusters with real-time metri
 
 ### Settings
 - Tabbed interface for better organization:
-  - Connection: Proxmox VE host configuration and authentication
-  - Maintenance: Update intervals and migration settings
-  - Notifications: Email alerts configuration
+  - Proxmox Connection: Host configuration and authentication
+  - Maintenance Settings: Update intervals and migration settings
+  - Backup & Restore Config: Configuration management
 - Username/password authentication for Proxmox access
 - SSL verification toggle for secure connections
 - Credentials securely stored in database
@@ -65,9 +65,10 @@ A modern web application for monitoring Proxmox VE clusters with real-time metri
   - Update check interval configuration
   - Metrics collection interval adjustment
   - Automatic VM migration toggle
-- Notification settings:
-  - Email notifications for important events
-  - Customizable notification types (updates, migrations, errors)
+- Configuration management:
+  - Export current settings as JSON backup
+  - Import settings from backup file
+  - Automatic validation of backup files
 
 ## API Endpoints
 

@@ -15,9 +15,9 @@
 
 <div class="tabbed-interface">
     <nav class="settings-tabs">
-        <button class="tab-link active" data-tab="connection">Connection</button>
-        <button class="tab-link" data-tab="maintenance">Maintenance</button>
-        <button class="tab-link" data-tab="notifications">Notifications</button>
+        <button class="tab-link active" data-tab="connection">Proxmox Connection</button>
+        <button class="tab-link" data-tab="maintenance">Maintenance Settings</button>
+        <button class="tab-link" data-tab="backup">Backup & Restore Config</button>
     </nav>
 
     <div id="connection" class="tab-content active">
@@ -74,41 +74,21 @@
         </form>
     </div>
 
-    <div id="notifications" class="tab-content">
-        <h2>Notification Settings</h2>
-        <form id="notificationForm" class="settings-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div id="backup" class="tab-content">
+        <h2>Backup & Restore Configuration</h2>
+        <div class="settings-form">
             <div class="form-group">
-                <label for="email_notifications">
-                    <input type="checkbox" id="email_notifications" name="email_notifications">
-                    Enable Email Notifications
-                </label>
+                <h3>Backup Configuration</h3>
+                <p>Download your current configuration settings as a JSON file.</p>
+                <button id="backupBtn" class="btn">Download Backup</button>
             </div>
-            <div id="emailSettings" style="display: none;">
-                <div class="form-group">
-                    <label for="email_address">Email Address:</label>
-                    <input type="email" id="email_address" name="email_address">
-                </div>
-                <div class="form-group">
-                    <label>Notification Types:</label>
-                    <div class="checkbox-group">
-                        <label>
-                            <input type="checkbox" name="notify_updates" checked>
-                            Updates Available
-                        </label>
-                        <label>
-                            <input type="checkbox" name="notify_migrations" checked>
-                            VM Migrations
-                        </label>
-                        <label>
-                            <input type="checkbox" name="notify_errors" checked>
-                            System Errors
-                        </label>
-                    </div>
-                </div>
+            <div class="form-group">
+                <h3>Restore Configuration</h3>
+                <p>Restore settings from a previously downloaded backup file.</p>
+                <input type="file" id="restoreFile" accept=".json" class="form-control">
+                <button id="restoreBtn" class="btn">Restore from Backup</button>
             </div>
-            <button type="submit" class="btn">Save Notification Settings</button>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -132,14 +112,6 @@
                 link.classList.add('active');
                 document.getElementById(tabId).classList.add('active');
             });
-        });
-
-        // Email notifications toggle
-        const emailNotifications = document.getElementById('email_notifications');
-        const emailSettings = document.getElementById('emailSettings');
-
-        emailNotifications.addEventListener('change', function() {
-            emailSettings.style.display = this.checked ? 'block' : 'none';
         });
 
         // Connection form submission
@@ -211,31 +183,86 @@
             }
         });
 
-        // Notification form submission
-        document.getElementById('notificationForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-
+        // Backup & Restore functionality
+        document.getElementById('backupBtn').addEventListener('click', async function() {
             try {
-                const response = await fetch('/api/settings/notifications', {
-                    method: 'POST',
+                const response = await fetch('/api/settings', {
+                    credentials: 'same-origin',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
                         'X-CSRFToken': getCsrfToken()
-                    },
-                    body: new URLSearchParams(formData),
-                    credentials: 'same-origin'
+                    }
                 });
-
+                
                 if (response.ok) {
-                    alert('Notification settings saved successfully');
-                } else {
-                    const data = await response.json();
-                    alert(data.error || 'Failed to save notification settings');
+                    const settings = await response.json();
+                    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'proxmox-cluster-manager-config.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
                 }
             } catch (error) {
-                console.error('Error saving notification settings:', error);
-                alert('Error saving notification settings');
+                console.error('Error creating backup:', error);
+                alert('Error creating backup');
+            }
+        });
+
+        document.getElementById('restoreBtn').addEventListener('click', async function() {
+            const fileInput = document.getElementById('restoreFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a backup file');
+                return;
+            }
+
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const settings = JSON.parse(e.target.result);
+                        
+                        // Restore connection settings
+                        if (settings.connection) {
+                            await fetch('/api/settings/proxmox', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCsrfToken()
+                                },
+                                body: JSON.stringify(settings.connection),
+                                credentials: 'same-origin'
+                            });
+                        }
+                        
+                        // Restore maintenance settings
+                        if (settings.maintenance) {
+                            await fetch('/api/settings/maintenance', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCsrfToken()
+                                },
+                                body: JSON.stringify(settings.maintenance),
+                                credentials: 'same-origin'
+                            });
+                        }
+                        
+                        alert('Settings restored successfully');
+                        location.reload();
+                    } catch (error) {
+                        console.error('Error restoring settings:', error);
+                        alert('Error restoring settings: Invalid backup file');
+                    }
+                };
+                reader.readAsText(file);
+            } catch (error) {
+                console.error('Error reading backup file:', error);
+                alert('Error reading backup file');
             }
         });
 
@@ -304,18 +331,6 @@
                     document.getElementById('auto_migrate').checked = settings.maintenance.auto_migrate === true;
                 }
                 
-                // Populate notification settings
-                if (settings.notifications) {
-                    document.getElementById('email_notifications').checked = settings.notifications.email_enabled === true;
-                    document.getElementById('email_address').value = settings.notifications.email_address || '';
-                    document.getElementById('emailSettings').style.display = settings.notifications.email_enabled ? 'block' : 'none';
-                    
-                    if (settings.notifications.types) {
-                        document.querySelector('input[name="notify_updates"]').checked = settings.notifications.types.updates !== false;
-                        document.querySelector('input[name="notify_migrations"]').checked = settings.notifications.types.migrations !== false;
-                        document.querySelector('input[name="notify_errors"]').checked = settings.notifications.types.errors !== false;
-                    }
-                }
             }
         } catch (error) {
             console.error('Error loading settings:', error);

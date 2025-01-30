@@ -52,19 +52,22 @@ A modern web application for monitoring Proxmox VE clusters with real-time metri
   - Update process progress
 
 ### Settings
-- Proxmox VE connection configuration
-- SSL verification toggle
+- Tabbed interface for better organization:
+  - Connection: Proxmox VE host configuration and authentication
+  - Maintenance: Update intervals and migration settings
+  - Notifications: Email alerts configuration
+- Username/password authentication for Proxmox access
+- SSL verification toggle for secure connections
 - Credentials securely stored in database
 - Connection testing before saving
 - Credentials used for both Proxmox API and SSH authentication
-- Backup and restore functionality for all settings
-- Maintenance window scheduling for updates
-- Balance settings configuration:
-  - Balance mode selection (threshold/equal distribution)
-  - Load threshold configuration
-  - Minimum load difference settings
-  - Check interval customization
-  - Maximum concurrent migrations limit
+- Maintenance settings:
+  - Update check interval configuration
+  - Metrics collection interval adjustment
+  - Automatic VM migration toggle
+- Notification settings:
+  - Email notifications for important events
+  - Customizable notification types (updates, migrations, errors)
 
 ## API Endpoints
 
@@ -124,13 +127,13 @@ docker compose up --build
 
 ### ProxmoxCredentials
 - id: Primary key
-- hostname: Proxmox host address
-- username: Proxmox username
-- password: Proxmox password (encrypted)
+- host: Proxmox host address
 - port: Proxmox port (default: 8006)
+- username: Proxmox username (for API and SSH access)
+- password: Encrypted password
 - verify_ssl: SSL verification flag
-- created_at: Timestamp
-- updated_at: Timestamp
+- created_at: Creation timestamp
+- updated_at: Last update timestamp
 
 ### NodeUpdateStatus
 - id: Primary key

@@ -2,9 +2,7 @@
 
 {% block title %}Settings - Proxmox Cluster Manager{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
-{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
 <div class="settings-header">
@@ -15,9 +13,14 @@
     </div>
 </div>
 
-<div class="settings-grid">
-    <!-- Proxmox Connection Settings -->
-    <div class="settings-section">
+<div class="tabbed-interface">
+    <nav class="settings-tabs">
+        <button class="tab-link active" data-tab="connection">Connection</button>
+        <button class="tab-link" data-tab="maintenance">Maintenance</button>
+        <button class="tab-link" data-tab="notifications">Notifications</button>
+    </nav>
+
+    <div id="connection" class="tab-content active">
         <h2>Proxmox Connection</h2>
         <form id="connectionForm" class="settings-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -29,24 +32,7 @@
                 <label for="port">Port:</label>
                 <input type="number" id="port" name="port" value="8006" required>
             </div>
-            <div class="form-group">
-                <label for="auth_type">Authentication Type:</label>
-                <select id="auth_type" name="auth_type" required>
-                    <option value="token">API Token</option>
-                    <option value="password">Username/Password</option>
-                </select>
-            </div>
-            <div id="tokenFields" class="auth-fields">
-                <div class="form-group">
-                    <label for="token_id">Token ID:</label>
-                    <input type="text" id="token_id" name="token_id">
-                </div>
-                <div class="form-group">
-                    <label for="token_secret">Token Secret:</label>
-                    <input type="password" id="token_secret" name="token_secret">
-                </div>
-            </div>
-            <div id="passwordFields" class="auth-fields" style="display: none;">
+            <div class="auth-fields">
                 <div class="form-group">
                     <label for="username">Username:</label>
                     <input type="text" id="username" name="username">
@@ -66,8 +52,7 @@
         </form>
     </div>
 
-    <!-- Maintenance Settings -->
-    <div class="settings-section">
+    <div id="maintenance" class="tab-content">
         <h2>Maintenance Settings</h2>
         <form id="maintenanceForm" class="settings-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -89,8 +74,7 @@
         </form>
     </div>
 
-    <!-- Notification Settings -->
-    <div class="settings-section">
+    <div id="notifications" class="tab-content">
         <h2>Notification Settings</h2>
         <form id="notificationForm" class="settings-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -133,19 +117,21 @@
 {{ super() }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auth type toggle
-        const authTypeSelect = document.getElementById('auth_type');
-        const tokenFields = document.getElementById('tokenFields');
-        const passwordFields = document.getElementById('passwordFields');
+        // Tab switching
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
 
-        authTypeSelect.addEventListener('change', function() {
-            if (this.value === 'token') {
-                tokenFields.style.display = 'block';
-                passwordFields.style.display = 'none';
-            } else {
-                tokenFields.style.display = 'none';
-                passwordFields.style.display = 'block';
-            }
+        tabLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const tabId = link.getAttribute('data-tab');
+                
+                // Update active states
+                tabLinks.forEach(l => l.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                link.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
         });
 
         // Email notifications toggle
@@ -262,18 +248,8 @@
                 if (settings.connection) {
                     document.getElementById('host').value = settings.connection.host || '';
                     document.getElementById('port').value = settings.connection.port || '8006';
-                    document.getElementById('auth_type').value = settings.connection.auth_type || 'token';
                     document.getElementById('verify_ssl').checked = settings.connection.verify_ssl !== false;
-                    
-                    if (settings.connection.auth_type === 'token') {
-                        document.getElementById('token_id').value = settings.connection.token_id || '';
-                        document.getElementById('tokenFields').style.display = 'block';
-                        document.getElementById('passwordFields').style.display = 'none';
-                    } else {
-                        document.getElementById('username').value = settings.connection.username || '';
-                        document.getElementById('tokenFields').style.display = 'none';
-                        document.getElementById('passwordFields').style.display = 'block';
-                    }
+                    document.getElementById('username').value = settings.connection.username || '';
                 }
                 
                 // Populate maintenance settings

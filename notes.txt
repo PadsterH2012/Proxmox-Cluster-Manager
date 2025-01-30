@@ -1,0 +1,5 @@
+current_load_balencing_script.sh
+
+this may need to be a little more clever when deciding how best to balance, like adding current cpu / mem or a few vms to make up a shortfall
+
+maybe the contents of this script will help create the balance function we will use in the project

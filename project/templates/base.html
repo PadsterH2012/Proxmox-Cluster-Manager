@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Proxmox Cluster Manager{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body style="background: #121416; color: #e9ecef; margin: 0; padding: 20px;">
+    <nav class="nav" style="background: #1c1e21; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" height="32" width="32" viewBox="0 0 24 24" fill="#3498db">
+                <path d="M21 3h-5.5C14.67 3 14 3.67 14 4.5V9c0 .83.67 1.5 1.5 1.5H21v9H3v-9h5.5c.83 0 1.5-.67 1.5-1.5V4.5C10 3.67 9.33 3 8.5 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 6c-.28 0-.5-.22-.5-.5V4.5c0-.28.22-.5.5-.5H21v5h-6z"/>
+                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+        </div>
+        {% if session.get('user_id') %}
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('settings') }}">Settings</a>
+            <form action="{{ url_for('logout') }}" method="post" style="display: inline-block;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-link" style="background: none; border: none; color: #3498db; cursor: pointer; padding: 0.5rem 1rem;">Logout</button>
+            </form>
+        </div>
+        {% endif %}
+    </nav>
+
+    <div class="container" style="max-width: 1200px; margin: 0 auto;">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}
+    <script>
+        // Get CSRF token for protected routes
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        }
+
+        // Add CSRF token to all fetch requests
+        const originalFetch = window.fetch;
+        window.fetch = function() {
+            const resource = arguments[0];
+            const config = arguments[1];
+            
+            if (config && config.headers) {
+                config.headers['X-CSRFToken'] = getCsrfToken();
+            } else if (config) {
+                config.headers = { 'X-CSRFToken': getCsrfToken() };
+            } else {
+                arguments[1] = { headers: { 'X-CSRFToken': getCsrfToken() } };
+            }
+
+            return originalFetch.apply(this, arguments);
+        };
+    </script>
+    {% endblock %}
+</body>
+</html>

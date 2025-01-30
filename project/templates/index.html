@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Proxmox Cluster Manager</h1>
+    <p>A comprehensive management interface for Proxmox clusters, providing real-time monitoring, resource optimization, and automated maintenance capabilities.</p>
+</div>
+
+<div class="auth-container">
+    {% if not session.get('user_id') %}
+    <div class="btn-group">
+        <button class="btn" onclick="showForm('register')">Register</button>
+        <button class="btn btn-outline" onclick="showForm('login')">Sign In</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="registerForm" class="form-container">
+        <form onsubmit="handleRegister(event)">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <input type="text" id="regUsername" name="username" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="regPassword" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn">Register</button>
+        </form>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginForm" class="form-container">
+        <form onsubmit="handleLogin(event)">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <input type="text" id="loginUsername" name="username" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="loginPassword" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn">Sign In</button>
+        </form>
+    </div>
+    {% else %}
+        <div class="welcome-message">
+            <h2>Welcome to Proxmox Cluster Manager!</h2>
+            <a href="{{ url_for('dashboard.index') }}" class="btn">Go to Dashboard</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function showForm(formType) {
+        // Hide both forms
+        document.querySelectorAll('.form-container').forEach(form => {
+            form.classList.remove('show');
+        });
+        
+        // Show the selected form
+        document.getElementById(formType + 'Form').classList.add('show');
+    }
+
+    async function handleRegister(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: new URLSearchParams(formData),
+                credentials: 'same-origin'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                showForm('login');
+                alert('Registration successful! Please login.');
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Registration failed');
+            }
+        } catch (error) {
+            console.error('Error during registration:', error);
+            alert('Error during registration');
+        }
+    }
+
+    async function handleLogin(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: new URLSearchParams(formData),
+                credentials: 'same-origin'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                window.location.href = data.redirect || '/dashboard';
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Error during login:', error);
+            alert('Error during login');
+        }
+    }
+</script>
+{% endblock %}

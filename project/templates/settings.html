@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Proxmox Cluster Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="settings-header">
+    <h1>Cluster Settings</h1>
+    <div class="connection-status">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking connection...</span>
+    </div>
+</div>
+
+<div class="settings-grid">
+    <!-- Proxmox Connection Settings -->
+    <div class="settings-section">
+        <h2>Proxmox Connection</h2>
+        <form id="connectionForm" class="settings-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="host">Proxmox Host:</label>
+                <input type="text" id="host" name="host" required>
+            </div>
+            <div class="form-group">
+                <label for="port">Port:</label>
+                <input type="number" id="port" name="port" value="8006" required>
+            </div>
+            <div class="form-group">
+                <label for="auth_type">Authentication Type:</label>
+                <select id="auth_type" name="auth_type" required>
+                    <option value="token">API Token</option>
+                    <option value="password">Username/Password</option>
+                </select>
+            </div>
+            <div id="tokenFields" class="auth-fields">
+                <div class="form-group">
+                    <label for="token_id">Token ID:</label>
+                    <input type="text" id="token_id" name="token_id">
+                </div>
+                <div class="form-group">
+                    <label for="token_secret">Token Secret:</label>
+                    <input type="password" id="token_secret" name="token_secret">
+                </div>
+            </div>
+            <div id="passwordFields" class="auth-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="verify_ssl">
+                    <input type="checkbox" id="verify_ssl" name="verify_ssl" checked>
+                    Verify SSL Certificate
+                </label>
+            </div>
+            <button type="submit" class="btn">Save Connection Settings</button>
+        </form>
+    </div>
+
+    <!-- Maintenance Settings -->
+    <div class="settings-section">
+        <h2>Maintenance Settings</h2>
+        <form id="maintenanceForm" class="settings-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="update_check_interval">Update Check Interval (hours):</label>
+                <input type="number" id="update_check_interval" name="update_check_interval" min="1" max="168" value="24" required>
+            </div>
+            <div class="form-group">
+                <label for="metrics_collection_interval">Metrics Collection Interval (minutes):</label>
+                <input type="number" id="metrics_collection_interval" name="metrics_collection_interval" min="5" max="1440" value="15" required>
+            </div>
+            <div class="form-group">
+                <label for="auto_migrate">
+                    <input type="checkbox" id="auto_migrate" name="auto_migrate">
+                    Enable Automatic VM Migration
+                </label>
+            </div>
+            <button type="submit" class="btn">Save Maintenance Settings</button>
+        </form>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="settings-section">
+        <h2>Notification Settings</h2>
+        <form id="notificationForm" class="settings-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="email_notifications">
+                    <input type="checkbox" id="email_notifications" name="email_notifications">
+                    Enable Email Notifications
+                </label>
+            </div>
+            <div id="emailSettings" style="display: none;">
+                <div class="form-group">
+                    <label for="email_address">Email Address:</label>
+                    <input type="email" id="email_address" name="email_address">
+                </div>
+                <div class="form-group">
+                    <label>Notification Types:</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="notify_updates" checked>
+                            Updates Available
+                        </label>
+                        <label>
+                            <input type="checkbox" name="notify_migrations" checked>
+                            VM Migrations
+                        </label>
+                        <label>
+                            <input type="checkbox" name="notify_errors" checked>
+                            System Errors
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn">Save Notification Settings</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auth type toggle
+        const authTypeSelect = document.getElementById('auth_type');
+        const tokenFields = document.getElementById('tokenFields');
+        const passwordFields = document.getElementById('passwordFields');
+
+        authTypeSelect.addEventListener('change', function() {
+            if (this.value === 'token') {
+                tokenFields.style.display = 'block';
+                passwordFields.style.display = 'none';
+            } else {
+                tokenFields.style.display = 'none';
+                passwordFields.style.display = 'block';
+            }
+        });
+
+        // Email notifications toggle
+        const emailNotifications = document.getElementById('email_notifications');
+        const emailSettings = document.getElementById('emailSettings');
+
+        emailNotifications.addEventListener('change', function() {
+            emailSettings.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Connection form submission
+        document.getElementById('connectionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/settings/connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: new URLSearchParams(formData),
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    alert('Connection settings saved successfully');
+                    // Refresh connection status
+                    checkConnectionStatus();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to save connection settings');
+                }
+            } catch (error) {
+                console.error('Error saving connection settings:', error);
+                alert('Error saving connection settings');
+            }
+        });
+
+        // Maintenance form submission
+        document.getElementById('maintenanceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/settings/maintenance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: new URLSearchParams(formData),
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    alert('Maintenance settings saved successfully');
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to save maintenance settings');
+                }
+            } catch (error) {
+                console.error('Error saving maintenance settings:', error);
+                alert('Error saving maintenance settings');
+            }
+        });
+
+        // Notification form submission
+        document.getElementById('notificationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/settings/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: new URLSearchParams(formData),
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    alert('Notification settings saved successfully');
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to save notification settings');
+                }
+            } catch (error) {
+                console.error('Error saving notification settings:', error);
+                alert('Error saving notification settings');
+            }
+        });
+
+        // Load existing settings
+        loadSettings();
+    });
+
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/settings', {
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
+            
+            if (response.ok) {
+                const settings = await response.json();
+                
+                // Populate connection settings
+                if (settings.connection) {
+                    document.getElementById('host').value = settings.connection.host || '';
+                    document.getElementById('port').value = settings.connection.port || '8006';
+                    document.getElementById('auth_type').value = settings.connection.auth_type || 'token';
+                    document.getElementById('verify_ssl').checked = settings.connection.verify_ssl !== false;
+                    
+                    if (settings.connection.auth_type === 'token') {
+                        document.getElementById('token_id').value = settings.connection.token_id || '';
+                        document.getElementById('tokenFields').style.display = 'block';
+                        document.getElementById('passwordFields').style.display = 'none';
+                    } else {
+                        document.getElementById('username').value = settings.connection.username || '';
+                        document.getElementById('tokenFields').style.display = 'none';
+                        document.getElementById('passwordFields').style.display = 'block';
+                    }
+                }
+                
+                // Populate maintenance settings
+                if (settings.maintenance) {
+                    document.getElementById('update_check_interval').value = settings.maintenance.update_check_interval || '24';
+                    document.getElementById('metrics_collection_interval').value = settings.maintenance.metrics_collection_interval || '15';
+                    document.getElementById('auto_migrate').checked = settings.maintenance.auto_migrate === true;
+                }
+                
+                // Populate notification settings
+                if (settings.notifications) {
+                    document.getElementById('email_notifications').checked = settings.notifications.email_enabled === true;
+                    document.getElementById('email_address').value = settings.notifications.email_address || '';
+                    document.getElementById('emailSettings').style.display = settings.notifications.email_enabled ? 'block' : 'none';
+                    
+                    if (settings.notifications.types) {
+                        document.querySelector('input[name="notify_updates"]').checked = settings.notifications.types.updates !== false;
+                        document.querySelector('input[name="notify_migrations"]').checked = settings.notifications.types.migrations !== false;
+                        document.querySelector('input[name="notify_errors"]').checked = settings.notifications.types.errors !== false;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+</script>
+{% endblock %}

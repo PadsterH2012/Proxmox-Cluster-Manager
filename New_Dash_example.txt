@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: #1a1a1a;
+    color: #ffffff;
+    padding: 20px;
+    margin: 0;
+  }
+  .dashboard-title {
+    color: #4a90e2;
+    font-size: 24px;
+    margin-bottom: 30px;
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  .metric-box {
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  .cluster-resource {
+    text-align: center;
+  }
+  .progress-container {
+    width: 100%;
+    height: 8px;
+    background: #3d3d3d;
+    border-radius: 4px;
+    margin: 12px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #4a90e2;
+    border-radius: 4px;
+  }
+  .metric-value-lg {
+    font-size: 28px;
+    color: #4a90e2;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .count-ratio {
+    font-size: 0.6em;
+    color: #888;
+    margin-left: 4px;
+  }
+  .metric-details {
+    color: #888;
+    font-size: 0.9em;
+    line-height: 1.4;
+  }
+  .nodes-panel {
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .panel-title {
+    font-size: 20px;
+    color: #4a90e2;
+    margin: 0;
+  }
+  .node-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr auto;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #3d3d3d;
+    gap: 15px;
+  }
+  .resource-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+  .hardware-spec {
+    color: #888;
+    font-size: 0.9em;
+  }
+  .btn-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .btn {
+    background: #4a90e2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+  .btn:hover {
+    background: #357abd;
+  }
+  .log-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+  }
+  .log-box {
+    background: #2d2d2d;
+    border-radius: 10px;
+    padding: 15px;
+    height: 250px;
+    overflow-y: auto;
+  }
+  .log-full-width {
+    grid-column: 1 / -1;
+  }
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    position: sticky;
+    top: -5px;
+    background: #2d2d2d;
+    padding: 5px 0;
+    z-index: 1;
+  }
+  .log-controls {
+    display: flex;
+    gap: 10px;
+  }
+  .log-controls label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    color: #888;
+  }
+  .log-entry {
+    padding: 8px;
+    margin: 5px 0;
+    background: #3d3d3d;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  .log-time {
+    color: #4a90e2;
+    font-size: 0.8em;
+    margin-right: 10px;
+  }
+  .log-message.info { color: #fff; }
+  .log-message.warn { color: #ffb300; }
+  .log-message.critical { color: #ff5252; }
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #2d2d2d;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #4a90e2;
+    border-radius: 4px;
+  }
+  .bc-auto,
+  .rm-auto {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #fff;
+  }
+  .bc-auto:hover::after,
+  .rm-auto:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #3d3d3d;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <h1 class="dashboard-title">Proxmox Cluster Dashboard</h1>
+  
+  <div class="metric-grid">
+    <div class="metric-box">
+      <div>VMs</div>
+      <div class="metric-value-lg">
+        9
+        <span class="count-ratio">/9</span>
+      </div>
+    </div>
+
+    <div class="metric-box">
+      <div>LXC</div>
+      <div class="metric-value-lg">
+        14
+        <span class="count-ratio">/12</span>
+      </div>
+    </div>
+
+    <div class="metric-box cluster-resource">
+      <div>Cluster CPU</div>
+      <div class="metric-value-lg">8%</div>
+      <div class="progress-container">
+        <div class="progress-fill" style="width: 8%"></div>
+      </div>
+      <div class="metric-details">
+        24 Cores Total
+      </div>
+    </div>
+    
+    <div class="metric-box cluster-resource">
+      <div>Cluster Memory</div>
+      <div class="metric-value-lg">59%</div>
+      <div class="progress-container">
+        <div class="progress-fill" style="width: 59%"></div>
+      </div>
+      <div class="metric-details">
+        53.40GiB out of 90.53GiB
+      </div>
+    </div>
+  </div>
+
+  <div class="nodes-panel">
+    <div class="panel-header">
+      <h2 class="panel-title">Cluster Nodes</h2>
+      <div class="btn-group">
+        <button class="btn">Schedule Cluster Update</button>
+        <button class="btn">Balance Cluster</button>
+        <label class="bc-auto" data-tooltip="Automatically balance cluster resources">
+          <input type="checkbox">
+          BC Auto
+        </label>
+        <button class="btn">Resource Manager</button>
+        <label class="rm-auto" data-tooltip="Automatically manage resource allocation">
+          <input type="checkbox">
+          RM Auto
+        </label>
+      </div>
+    </div>
+    
+    <div class="node-row">
+      <div>
+        <strong>hla-pve1</strong><br>
+        <span class="hardware-spec">10.203.20.5</span><br>
+        <span class="uptime">6 days 15h</span>
+      </div>
+      <div class="resource-group">
+        <div>
+          <div>CPU: 5%</div>
+          <div class="hardware-spec">12 Cores</div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-fill" style="width: 5%"></div>
+        </div>
+      </div>
+      <div class="resource-group">
+        <div>
+          <div>MEM: 45%</div>
+          <div class="hardware-spec">45.26GiB</div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-fill" style="width: 45%"></div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn">Schedule Update</button>
+      </div>
+    </div>
+    
+    <div class="node-row">
+      <div>
+        <strong>hla-pve2</strong><br>
+        <span class="hardware-spec">10.203.20.6</span><br>
+        <span class="uptime">6 days 18h</span>
+      </div>
+      <div class="resource-group">
+        <div>
+          <div>CPU: 11%</div>
+          <div class="hardware-spec">12 Cores</div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-fill" style="width: 11%"></div>
+        </div>
+      </div>
+      <div class="resource-group">
+        <div>
+          <div>MEM: 89%</div>
+          <div class="hardware-spec">45.26GiB</div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-fill" style="width: 89%"></div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn">Schedule Update</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="log-section">
+    <div class="log-box">
+      <div class="log-header">
+        <h3>Migration Logs</h3>
+        <div class="log-controls">
+          <label><input type="checkbox" checked> Info</label>
+          <label><input type="checkbox" checked> Warn</label>
+          <label><input type="checkbox" checked> Critical</label>
+        </div>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:15:22</span>
+        <span class="log-message info">VM-108 successfully migrated to hla-pve3</span>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:12:45</span>
+        <span class="log-message critical">Failed migration: CT-62 - Storage connection timeout</span>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:10:30</span>
+        <span class="log-message warn">High network latency during VM-107 migration (320ms)</span>
+      </div>
+    </div>
+
+    <div class="log-box">
+      <div class="log-header">
+        <h3>Resource Manager Logs</h3>
+        <div class="log-controls">
+          <label><input type="checkbox" checked> Info</label>
+          <label><input type="checkbox" checked> Warn</label>
+          <label><input type="checkbox" checked> Critical</label>
+        </div>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:16:05</span>
+        <span class="log-message info">Auto-scaled memory for VM-110 (+4GiB)</span>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:15:30</span>
+        <span class="log-message critical">CPU overallocation detected on hla-pve2 (95%)</span>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:14:55</span>
+        <span class="log-message warn">Storage pool 'ssd-array1' at 89% capacity</span>
+      </div>
+    </div>
+
+    <div class="log-box log-full-width">
+      <div class="log-header">
+        <h3>Updates Log</h3>
+        <div class="log-controls">
+          <label><input type="checkbox" checked> Info</label>
+          <label><input type="checkbox" checked> Warn</label>
+          <label><input type="checkbox" checked> Critical</label>
+        </div>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:17:20</span>
+        <span class="log-message info">Security patches applied to 3 nodes</span>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:16:45</span>
+        <span class="log-message warn">Pending kernel updates on hla-pve1</span>
+      </div>
+    </div>
+
+    <div class="log-box log-full-width">
+      <div class="log-header">
+        <h3>General Logs</h3>
+        <div class="log-controls">
+          <label><input type="checkbox" checked> Info</label>
+          <label><input type="checkbox" checked> Warn</label>
+          <label><input type="checkbox" checked> Critical</label>
+        </div>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:18:00</span>
+        <span class="log-message info">Cluster health check completed: No issues found</span>
+      </div>
+      <div class="log-entry">
+        <span class="log-time">10:17:45</span>
+        <span class="log-message critical">HA failover initiated for VM-105</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

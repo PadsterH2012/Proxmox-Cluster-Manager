@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Proxmox Cluster Manager{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Cluster Dashboard</h1>
+    <div class="connection-status">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking connection...</span>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Metrics Section -->
+    <div class="dashboard-section">
+        <h2>Cluster Metrics</h2>
+        <button onclick="triggerMetricsCollection()" class="btn">Collect Metrics</button>
+        <div id="dashboard-log" class="log-section">
+            <div class="log-controls">
+                <label><input type="checkbox" checked> Info</label>
+                <label><input type="checkbox" checked> Warning</label>
+                <label><input type="checkbox" checked> Critical</label>
+            </div>
+            <div class="log-content"></div>
+        </div>
+    </div>
+
+    <!-- Updates Section -->
+    <div class="dashboard-section">
+        <h2>Updates</h2>
+        <button onclick="checkUpdates()" class="btn">Check Updates</button>
+        <div id="updates-log" class="log-section">
+            <div class="log-controls">
+                <label><input type="checkbox" checked> Info</label>
+                <label><input type="checkbox" checked> Warning</label>
+                <label><input type="checkbox" checked> Critical</label>
+            </div>
+            <div class="log-content"></div>
+        </div>
+    </div>
+
+    <!-- Migration Section -->
+    <div class="dashboard-section">
+        <h2>Migration Status</h2>
+        <div id="migration-log" class="log-section">
+            <div class="log-controls">
+                <label><input type="checkbox" checked> Info</label>
+                <label><input type="checkbox" checked> Warning</label>
+                <label><input type="checkbox" checked> Critical</label>
+            </div>
+            <div class="log-content"></div>
+        </div>
+    </div>
+
+    <!-- Resource Section -->
+    <div class="dashboard-section">
+        <h2>Resource Allocation</h2>
+        <div id="resource-log" class="log-section">
+            <div class="log-controls">
+                <label><input type="checkbox" checked> Info</label>
+                <label><input type="checkbox" checked> Warning</label>
+                <label><input type="checkbox" checked> Critical</label>
+            </div>
+            <div class="log-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Schedule Modal -->
+<div id="updateModal" class="modal">
+    <div class="modal-content">
+        <h2>Schedule Update</h2>
+        <form id="updateForm">
+            <input type="hidden" id="updateNodeName" name="node_name">
+            <div class="form-group">
+                <label for="updateTime">Schedule Time:</label>
+                <input type="datetime-local" id="updateTime" name="scheduled_time" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">Schedule</button>
+                <button type="button" class="btn btn-outline" onclick="closeUpdateModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

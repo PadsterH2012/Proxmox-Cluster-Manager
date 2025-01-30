@@ -14,16 +14,52 @@ body {
     justify-content: space-between;
     align-items: center;
     background: #1c1e21;
-    padding: 1rem;
+    padding: 1rem 2rem;
     border-radius: 8px;
     margin-bottom: 2rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.nav-center {
+    flex: 1;
+    text-align: center;
+}
+
+.nav-center h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
 }
 
 .nav-links {
     display: flex;
     align-items: center;
     gap: 1.5rem;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #adb5bd;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #e74c3c;
 }
 
 .nav-links a {
@@ -128,7 +164,17 @@ body {
     .nav {
         flex-direction: column;
         gap: 1rem;
+        padding: 1rem;
         text-align: center;
+    }
+
+    .nav-left, .nav-center, .nav-right {
+        width: 100%;
+    }
+
+    .nav-left {
+        flex-direction: column;
+        gap: 1rem;
     }
 
     .nav-links {
@@ -139,6 +185,15 @@ body {
     .nav-links a {
         width: 100%;
         padding: 0.75rem;
+    }
+
+    .nav-center h1 {
+        font-size: 1.25rem;
+        margin: 0.5rem 0;
+    }
+
+    .nav-right {
+        justify-content: center;
     }
 
     .container {

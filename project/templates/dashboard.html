@@ -15,6 +15,29 @@
     </div>
 </div>
 
+<div class="metric-cards">
+    <div class="metric-card">
+        <h3>VMs</h3>
+        <div class="metric-value">{{ metrics.vms.current }}/{{ metrics.vms.total }}</div>
+        <div class="metric-detail">Virtual Machines</div>
+    </div>
+    <div class="metric-card">
+        <h3>Containers</h3>
+        <div class="metric-value">{{ metrics.containers.current }}/{{ metrics.containers.total }}</div>
+        <div class="metric-detail">LXC Containers</div>
+    </div>
+    <div class="metric-card">
+        <h3>Cluster CPU</h3>
+        <div class="metric-value">{{ metrics.cpu.usage }}%</div>
+        <div class="metric-detail">{{ metrics.cpu.cores }} Cores Total</div>
+    </div>
+    <div class="metric-card">
+        <h3>Cluster Memory</h3>
+        <div class="metric-value">{{ metrics.memory.usage }}%</div>
+        <div class="metric-detail">{{ metrics.memory.used }} out of {{ metrics.memory.total }}</div>
+    </div>
+</div>
+
 <div class="dashboard-grid">
     <!-- Metrics Section -->
     <div class="dashboard-section">

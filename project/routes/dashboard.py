@@ -237,19 +237,35 @@ def register_routes(app):
         # Sort hosts by node name
         sorted_hosts = dict(sorted(hosts_metrics.items()))
         
+        # Format memory values to GiB
+        total_memory_gib = f"{cluster_metrics.total_memory / (1024**3):.1f}GiB" if cluster_metrics else "0GiB"
+        used_memory_gib = f"{cluster_metrics.used_memory / (1024**3):.1f}GiB" if cluster_metrics else "0GiB"
+
+        metrics = {
+            'vms': {
+                'current': online_vms,
+                'total': total_vms
+            },
+            'containers': {
+                'current': online_containers,
+                'total': total_containers
+            },
+            'cpu': {
+                'usage': round(cpu_percent),
+                'cores': cluster_metrics.total_cpu if cluster_metrics else 0
+            },
+            'memory': {
+                'usage': round(memory_percent),
+                'used': used_memory_gib,
+                'total': total_memory_gib
+            }
+        }
+
         return render_template('dashboard.html',
                             hosts=sorted_hosts,
-                            total_vms=total_vms,
-                            online_vms=online_vms,
-                            total_containers=total_containers,
-                            online_containers=online_containers,
-                            cpu_percent=cpu_percent,
-                            memory_percent=memory_percent,
+                            metrics=metrics,
                             total_nodes=cluster_metrics.node_count if cluster_metrics else 0,
-                            last_updated=cluster_metrics.timestamp if cluster_metrics else datetime.utcnow(),
-                            total_cores=cluster_metrics.total_cpu if cluster_metrics else 0,
-                            total_memory=cluster_metrics.total_memory if cluster_metrics else 0,
-                            used_memory=cluster_metrics.used_memory if cluster_metrics else 0)
+                            last_updated=cluster_metrics.timestamp if cluster_metrics else datetime.utcnow())
 
     @app.route('/api/metrics/hosts', methods=['GET'])
     def get_host_metrics():

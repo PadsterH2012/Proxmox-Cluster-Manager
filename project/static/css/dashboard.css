@@ -1,3 +1,50 @@
+/* Metric Cards */
+.metric-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+}
+
+.metric-card {
+    background: #1c1e21;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: #fff;
+}
+
+.metric-card h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #adb5bd;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+    color: #3498db;
+}
+
+.metric-detail {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+@media (max-width: 1024px) {
+    .metric-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .metric-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Dashboard and Settings Layout */
 .dashboard-header {
     display: flex;

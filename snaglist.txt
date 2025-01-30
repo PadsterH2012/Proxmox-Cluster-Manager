@@ -1,1 +1,3 @@
-Add run now to schedule update, either for node or cluster
+Fix the settings page as theme layout and tabs are now all missing
+
+please check the Rea

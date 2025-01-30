@@ -99,6 +99,13 @@ body {
     margin-bottom: 1rem;
 }
 
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #adb5bd;
+}
+
 .form-group input {
     width: 100%;
     padding: 0.8rem;

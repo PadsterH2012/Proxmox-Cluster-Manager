@@ -25,7 +25,8 @@
                 <input type="text" id="regUsername" name="username" placeholder="Username" required>
             </div>
             <div class="form-group">
-                <input type="password" id="regPassword" name="password" placeholder="Password" required>
+                <input type="password" id="regPassword" name="password" placeholder="Password" required oninput="validatePasswordInput(this)">
+                <small id="passwordHelp" class="form-help">Password must be at least 8 characters and contain at least one number</small>
             </div>
             <button type="submit" class="btn">Register</button>
         </form>
@@ -66,19 +67,47 @@
         document.getElementById(formType + 'Form').classList.add('show');
     }
 
+    function validatePassword(password) {
+        return password.length >= 8 && /\d/.test(password);
+    }
+
+    function validatePasswordInput(input) {
+        const helpText = document.getElementById('passwordHelp');
+        if (validatePassword(input.value)) {
+            helpText.style.color = '#2ecc71';
+            helpText.textContent = 'Password meets requirements';
+        } else {
+            helpText.style.color = '#adb5bd';
+            helpText.textContent = 'Password must be at least 8 characters and contain at least one number';
+        }
+    }
+
     async function handleRegister(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
+        const formObject = {};
+        formData.forEach((value, key) => {
+            formObject[key] = value;
+        });
+
+        // Client-side validation
+        if (!validatePassword(formObject.password)) {
+            alert('Password must be at least 8 characters and contain at least one number');
+            return;
+        }
 
         try {
             const response = await fetch('/register', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: new URLSearchParams(formData),
+                body: JSON.stringify({
+                    username: formObject.username,
+                    password: formObject.password
+                }),
                 credentials: 'same-origin'
             });
             
@@ -100,15 +129,22 @@
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
+        const formObject = {};
+        formData.forEach((value, key) => {
+            formObject[key] = value;
+        });
 
         try {
             const response = await fetch('/login', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: new URLSearchParams(formData),
+                body: JSON.stringify({
+                    username: formObject.username,
+                    password: formObject.password
+                }),
                 credentials: 'same-origin'
             });
             

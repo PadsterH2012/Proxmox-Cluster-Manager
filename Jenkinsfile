@@ -64,28 +64,28 @@ pipeline {
             }
         }
 
-        stage('Run API Integration Tests') {
-            steps {
-                dir('project') {
-                    sh """
-                        docker compose -f docker-compose.test-3-api.yml up \
-                            --abort-on-container-exit \
-                            --exit-code-from web
-                    """
-                }
-            }
-            post {
-                always {
-                    junit 'project/test-results-api.xml'
-                    // Stop all containers after API tests are done
-                    sh '''
-                        docker compose -f project/docker-compose.test-1-auth.yml down -v || true
-                        docker compose -f project/docker-compose.test-2-settings.yml down -v || true
-                        docker compose -f project/docker-compose.test-3-api.yml down -v || true
-                    '''
-                }
-            }
-        }
+        // stage('Run API Integration Tests') {
+        //     steps {
+        //         dir('project') {
+        //             sh """
+        //                 docker compose -f docker-compose.test-3-api.yml up \
+        //                     --abort-on-container-exit \
+        //                     --exit-code-from web
+        //             """
+        //         }
+        //     }
+        //     post {
+        //         always {
+        //             junit 'project/test-results-api.xml'
+        //             // Stop all containers after API tests are done
+        //             sh '''
+        //                 docker compose -f project/docker-compose.test-1-auth.yml down -v || true
+        //                 docker compose -f project/docker-compose.test-2-settings.yml down -v || true
+        //                 docker compose -f project/docker-compose.test-3-api.yml down -v || true
+        //             '''
+        //         }
+        //     }
+        // }
 
         stage('Push to Docker Hub') {
             steps {

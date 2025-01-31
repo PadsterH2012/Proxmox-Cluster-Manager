@@ -105,50 +105,49 @@ pipeline {
         stage('Deploy to Local Server') {
             steps {
                 script {
-                    // Create a temporary docker-compose file with environment variables
+                    // Create docker-compose.yml with injected variables
                     sh '''
-                        cat > deploy-compose.yml << 'EOL'
-version: '3'
-services:
-  web:
-    image: \${DOCKER_IMAGE_NAME}:\${DOCKER_IMAGE_TAG}
-    ports:
-      - "5000:5000"
-    environment:
-      - FLASK_ENV=production
-      - SQLALCHEMY_DATABASE_URI=postgresql://\${DB_USER}:\${DB_PASSWORD}@db:5432/\${DB_NAME}
-      - SECRET_KEY=\${SECRET_KEY}
-      - PROXMOX_NODE=\${PROXMOX_NODE}
-      - PROXMOX_USER=\${PROXMOX_USER}
-      - PROXMOX_PASSWORD=\${PROXMOX_PASSWORD}
-      - PROXMOX_HOST=\${PROXMOX_HOST}
-    depends_on:
-      - db
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=\${DB_USER}
-      - POSTGRES_PASSWORD=\${DB_PASSWORD}
-      - POSTGRES_DB=\${DB_NAME}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-volumes:
-  pgdata:
-EOL
+                        cat > deploy-compose.yml << EOL
+                        services:
+                        web:
+                            image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+                            ports:
+                            - "5000:5000"
+                            environment:
+                            - FLASK_ENV=production
+                            - SQLALCHEMY_DATABASE_URI=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+                            - SECRET_KEY=${SECRET_KEY}
+                            - PROXMOX_NODE=${PROXMOX_NODE}
+                            - PROXMOX_USER=${PROXMOX_USER}
+                            - PROXMOX_PASSWORD=${PROXMOX_PASSWORD}
+                            - PROXMOX_HOST=${PROXMOX_HOST}
+                            depends_on:
+                            - db
+                        db:
+                            image: postgres:13
+                            environment:
+                            - POSTGRES_USER=${DB_USER}
+                            - POSTGRES_PASSWORD=${DB_PASSWORD}
+                            - POSTGRES_DB=${DB_NAME}
+                            volumes:
+                            - pgdata:/var/lib/postgresql/data
+                        volumes:
+                        pgdata:
+                        EOL
                     '''
                     
-                    // Install sshpass if not already installed
-                    sh 'which sshpass || apt-get update && apt-get install -y sshpass'
+                    // Install sshpass with sudo (or pre-install)
+                    sh 'which sshpass || sudo apt-get update && sudo apt-get install -y sshpass'
                     
-                    // Deploy using environment variables
+                    // Deploy
                     sh """
-                        sshpass -p "\${proxman_pw}" ssh -o StrictHostKeyChecking=no \${proxman_user}@\${proxman_server_ip} '
+                        sshpass -p "${proxman_pw}" ssh -o StrictHostKeyChecking=no ${proxman_user}@${proxman_server_ip} '
                             mkdir -p ~/proxmox-cluster-manager
                         '
                         
-                        sshpass -p "\${proxman_pw}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${proxman_user}@\${proxman_server_ip}:~/proxmox-cluster-manager/docker-compose.yml
+                        sshpass -p "${proxman_pw}" scp deploy-compose.yml ${proxman_user}@${proxman_server_ip}:~/proxmox-cluster-manager/docker-compose.yml
                         
-                        sshpass -p "\${proxman_pw}" ssh -o StrictHostKeyChecking=no \${proxman_user}@\${proxman_server_ip} '
+                        sshpass -p "${proxman_pw}" ssh ${proxman_user}@${proxman_server_ip} '
                             cd ~/proxmox-cluster-manager && \
                             docker compose pull && \
                             docker compose down --remove-orphans && \
@@ -156,8 +155,6 @@ EOL
                         '
                         
                         rm deploy-compose.yml
-                        
-                        echo "Deployment completed successfully to \${proxman_server_ip}"
                     """
                 }
             }

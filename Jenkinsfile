@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
-        DOCKER_IMAGE_NAME = 'padster2012/Proxmox-Cluster-Manager'
+        DOCKER_IMAGE_NAME = 'padster2012/proxmox-cluster-manager'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 

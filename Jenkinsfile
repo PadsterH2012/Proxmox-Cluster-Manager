@@ -97,11 +97,60 @@ pipeline {
             }
         }
 
-        stage('Deploy with Docker Compose') {
+        stage('Deploy to Local Server') {
             steps {
-                dir('project') {
-                    sh 'docker compose --version'  // Check if docker-compose is installed.
-                    sh 'docker compose up -d'
+                script {
+                    // Create a temporary docker-compose file with environment variables
+                    sh '''
+                        cat > deploy-compose.yml << 'EOL'
+version: '3'
+services:
+  web:
+    image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+EOL
+                    '''
+                    
+                    // Deploy to remote server using Jenkins credentials
+                    withCredentials([
+                        string(credentialsId: 'proxman_server_ip', variable: 'SERVER_IP'),
+                        string(credentialsId: 'proxman_user', variable: 'SERVER_USER'),
+                        string(credentialsId: 'proxman_pw', variable: 'SERVER_PASSWORD')
+                    ]) {
+                        // Install sshpass if not already installed
+                        sh 'which sshpass || apt-get update && apt-get install -y sshpass'
+                        
+                        // Create deployment directory
+                        sh """
+                            sshpass -p "\${SERVER_PASSWORD}" ssh -o StrictHostKeyChecking=no \${SERVER_USER}@\${SERVER_IP} '
+                                mkdir -p ~/proxmox-cluster-manager
+                            '
+                        """
+                        
+                        // Copy docker-compose file
+                        sh """
+                            sshpass -p "\${SERVER_PASSWORD}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${SERVER_USER}@\${SERVER_IP}:~/proxmox-cluster-manager/docker-compose.yml
+                        """
+                        
+                        // Deploy using docker-compose
+                        sh """
+                            sshpass -p "\${SERVER_PASSWORD}" ssh -o StrictHostKeyChecking=no \${SERVER_USER}@\${SERVER_IP} '
+                                cd ~/proxmox-cluster-manager && \
+                                docker compose pull && \
+                                docker compose down --remove-orphans && \
+                                docker compose up -d
+                            '
+                        """
+                        
+                        // Clean up temporary file
+                        sh 'rm deploy-compose.yml'
+                        
+                        echo "Deployment completed successfully to \${SERVER_IP}"
+                    }
                 }
             }
         }

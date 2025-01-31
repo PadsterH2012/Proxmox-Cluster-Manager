@@ -37,6 +37,7 @@ The test suite includes:
 - Settings management tests (Proxmox credentials)
 - Validation checks
 - Login/Logout functionality
+- API Integration tests
 
 ### Test Environment Variables
 
@@ -56,3 +57,29 @@ If you encounter module import issues:
 ### Continuous Integration
 
 Tests are automatically run as part of the Jenkins CI/CD pipeline for each build.
+
+### Deployment
+
+The application is automatically deployed to a local server when all tests pass. The deployment process:
+
+1. Requirements:
+   - Docker and Docker Compose installed on target server
+   - SSH access to target server
+   - Jenkins credentials configured:
+     - proxman_server_ip: Target server IP address
+     - proxman_user: SSH username
+     - proxman_pw: SSH password
+
+2. Deployment Features:
+   - Automatic container management
+   - Zero-downtime deployment
+   - Automatic container restarts on failure
+   - Uses latest successful Docker image
+   - Maintains application state
+
+3. Deployment Process:
+   - Creates deployment directory on target server
+   - Copies Docker Compose configuration
+   - Pulls latest Docker image
+   - Gracefully stops existing containers
+   - Starts new containers with updated image

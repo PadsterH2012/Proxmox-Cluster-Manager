@@ -26,11 +26,11 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Auth Tests') {
             steps {
                 dir('project') {
                     sh """
-                        docker compose -f docker-compose.test.yml up \
+                        docker compose -f docker-compose.auth-test.yml up \
                             --abort-on-container-exit \
                             --exit-code-from web
                     """
@@ -38,8 +38,26 @@ pipeline {
             }
             post {
                 always {
-                    junit 'project/test-results.xml'
-                    sh 'docker compose -f project/docker-compose.test.yml down -v || true'
+                    junit 'project/test-results-auth.xml'
+                    sh 'docker compose -f project/docker-compose.auth-test.yml down -v || true'
+                }
+            }
+        }
+
+        stage('Run Settings Tests') {
+            steps {
+                dir('project') {
+                    sh """
+                        docker compose -f docker-compose.settings-test.yml up \
+                            --abort-on-container-exit \
+                            --exit-code-from web
+                    """
+                }
+            }
+            post {
+                always {
+                    junit 'project/test-results-settings.xml'
+                    sh 'docker compose -f project/docker-compose.settings-test.yml down -v || true'
                 }
             }
         }

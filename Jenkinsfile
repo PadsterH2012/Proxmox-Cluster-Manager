@@ -111,12 +111,29 @@ pipeline {
 version: '3'
 services:
   web:
-    image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+    image: \${DOCKER_IMAGE_NAME}:\${DOCKER_IMAGE_TAG}
     ports:
       - "5000:5000"
     environment:
       - FLASK_ENV=production
-    restart: unless-stopped
+      - SQLALCHEMY_DATABASE_URI=postgresql://\${DB_USER}:\${DB_PASSWORD}@db:5432/\${DB_NAME}
+      - SECRET_KEY=\${SECRET_KEY}
+      - PROXMOX_NODE=\${PROXMOX_NODE}
+      - PROXMOX_USER=\${PROXMOX_USER}
+      - PROXMOX_PASSWORD=\${PROXMOX_PASSWORD}
+      - PROXMOX_HOST=\${PROXMOX_HOST}
+    depends_on:
+      - db
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=\${DB_USER}
+      - POSTGRES_PASSWORD=\${DB_PASSWORD}
+      - POSTGRES_DB=\${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
 EOL
                     '''
                     

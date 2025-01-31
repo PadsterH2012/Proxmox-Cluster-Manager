@@ -18,7 +18,10 @@ pipeline {
             steps {
                 dir('project') {
                     sh 'ls -la'  // List all files in the project directory for debugging
-                    sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
+                    sh """
+                        docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
+                        docker tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_NAME}:latest
+                    """
                 }
             }
         }
@@ -35,8 +38,10 @@ pipeline {
 
         stage('Deploy with Docker Compose') {
             steps {
-                sh 'docker compose --version'  // Check if docker-compose is installed.
-                sh 'docker compose up -d'
+                dir('project') {
+                    sh 'docker compose --version'  // Check if docker-compose is installed.
+                    sh 'docker compose up -d'
+                }
             }
         }
 
@@ -58,7 +63,9 @@ pipeline {
 
     post {
         always {
-            sh 'docker compose down'
+            dir('project') {
+                sh 'docker compose down || true'  // Add || true to prevent failure if containers aren't running
+            }
             sh 'docker logout'
         }
         failure {

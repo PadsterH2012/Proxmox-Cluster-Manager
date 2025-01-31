@@ -1,6 +1,9 @@
-0services:
+services:
   web:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: padster2012/proxmox-cluster-manager:latest
     ports:
       - "5000:5000"
     environment:

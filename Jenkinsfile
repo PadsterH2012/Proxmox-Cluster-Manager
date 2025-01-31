@@ -5,7 +5,6 @@ pipeline {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
         DOCKER_IMAGE_NAME = 'padster2012/proxmox-cluster-manager'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DEPLOY_CREDENTIALS = credentials('proxman-deploy-credentials')  // Single credential for all deployment info
     }
 
     stages {
@@ -104,11 +103,25 @@ pipeline {
         }
 
         stage('Deploy to Local Server') {
+            when {
+                expression {
+                    // Only run deployment if credentials are available
+                    try {
+                        withCredentials([usernamePassword(credentialsId: 'proxman-deploy-credentials', usernameVariable: 'DEPLOY_USER', passwordVariable: 'DEPLOY_PASS')]) {
+                            return true
+                        }
+                    } catch (e) {
+                        echo "Skipping deployment: proxman-deploy-credentials not configured"
+                        return false
+                    }
+                }
+            }
             steps {
                 script {
-                    // Create a temporary docker-compose file with environment variables
-                    sh '''
-                        cat > deploy-compose.yml << 'EOL'
+                    withCredentials([usernamePassword(credentialsId: 'proxman-deploy-credentials', usernameVariable: 'DEPLOY_USER', passwordVariable: 'DEPLOY_PASS')]) {
+                        // Create a temporary docker-compose file with environment variables
+                        sh '''
+                            cat > deploy-compose.yml << 'EOL'
 version: '3'
 services:
   web:
@@ -119,30 +132,31 @@ services:
       - FLASK_ENV=production
     restart: unless-stopped
 EOL
-                    '''
-                    
-                    // Install sshpass if not already installed
-                    sh 'which sshpass || apt-get update && apt-get install -y sshpass'
-                    
-                    // Deploy using credentials
-                    sh """
-                        sshpass -p "\${DEPLOY_CREDENTIALS_PSW}" ssh -o StrictHostKeyChecking=no \${DEPLOY_CREDENTIALS_USR}@\${DEPLOY_CREDENTIALS_IP} '
-                            mkdir -p ~/proxmox-cluster-manager
-                        '
+                        '''
                         
-                        sshpass -p "\${DEPLOY_CREDENTIALS_PSW}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${DEPLOY_CREDENTIALS_USR}@\${DEPLOY_CREDENTIALS_IP}:~/proxmox-cluster-manager/docker-compose.yml
+                        // Install sshpass if not already installed
+                        sh 'which sshpass || apt-get update && apt-get install -y sshpass'
                         
-                        sshpass -p "\${DEPLOY_CREDENTIALS_PSW}" ssh -o StrictHostKeyChecking=no \${DEPLOY_CREDENTIALS_USR}@\${DEPLOY_CREDENTIALS_IP} '
-                            cd ~/proxmox-cluster-manager && \
-                            docker compose pull && \
-                            docker compose down --remove-orphans && \
-                            docker compose up -d
-                        '
-                        
-                        rm deploy-compose.yml
-                        
-                        echo "Deployment completed successfully to \${DEPLOY_CREDENTIALS_IP}"
-                    """
+                        // Deploy using credentials
+                        sh """
+                            sshpass -p "\${DEPLOY_PASS}" ssh -o StrictHostKeyChecking=no \${DEPLOY_USER}@localhost '
+                                mkdir -p ~/proxmox-cluster-manager
+                            '
+                            
+                            sshpass -p "\${DEPLOY_PASS}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${DEPLOY_USER}@localhost:~/proxmox-cluster-manager/docker-compose.yml
+                            
+                            sshpass -p "\${DEPLOY_PASS}" ssh -o StrictHostKeyChecking=no \${DEPLOY_USER}@localhost '
+                                cd ~/proxmox-cluster-manager && \
+                                docker compose pull && \
+                                docker compose down --remove-orphans && \
+                                docker compose up -d
+                            '
+                            
+                            rm deploy-compose.yml
+                            
+                            echo "Deployment completed successfully"
+                        """
+                    }
                 }
             }
         }
@@ -150,10 +164,12 @@ EOL
 
     post {
         always {
-            dir('project') {
-                sh 'docker compose down || true'  // Add || true to prevent failure if containers aren't running
+            node(any) {
+                dir('project') {
+                    sh 'docker compose down || true'  // Add || true to prevent failure if containers aren't running
+                }
+                sh 'docker logout || true'
             }
-            sh 'docker logout'
         }
         failure {
             echo 'The Pipeline failed :('

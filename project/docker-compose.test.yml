@@ -5,6 +5,9 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/test_db
       - FLASK_ENV=testing
       - PYTHONPATH=/app
+      - proxmox_server_test=${proxmox_server_test}
+      - proxmox_user_test=${proxmox_user_test}
+      - proxmox_pw_test=${proxmox_pw_test}
     depends_on:
       db:
         condition: service_healthy

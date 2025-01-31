@@ -30,7 +30,7 @@ pipeline {
             steps {
                 dir('project') {
                     sh """
-                        docker compose -f docker-compose.auth-test.yml up \
+                        docker compose -f docker-compose.test-1-auth.yml up \
                             --abort-on-container-exit \
                             --exit-code-from web
                     """
@@ -40,7 +40,7 @@ pipeline {
                 always {
                     junit 'project/test-results-auth.xml'
                     // Only stop the web container, keep db running
-                    sh 'docker compose -f project/docker-compose.auth-test.yml rm -f -s web || true'
+                    sh 'docker compose -f project/docker-compose.test-1-auth.yml rm -f -s web || true'
                 }
             }
         }
@@ -49,7 +49,7 @@ pipeline {
             steps {
                 dir('project') {
                     sh """
-                        docker compose -f docker-compose.settings-test.yml up \
+                        docker compose -f docker-compose.test-2-settings.yml up \
                             --abort-on-container-exit \
                             --exit-code-from web
                     """
@@ -60,8 +60,8 @@ pipeline {
                     junit 'project/test-results-settings.xml'
                     // Stop all containers after settings tests are done
                     sh '''
-                        docker compose -f project/docker-compose.auth-test.yml down -v || true
-                        docker compose -f project/docker-compose.settings-test.yml down -v || true
+                        docker compose -f project/docker-compose.test-1-auth.yml down -v || true
+                        docker compose -f project/docker-compose.test-2-settings.yml down -v || true
                     '''
                 }
             }

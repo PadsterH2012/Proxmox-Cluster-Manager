@@ -29,7 +29,8 @@ Tests are implemented using pytest and can be run using Docker Compose:
 
 ```bash
 cd project
-docker compose -f docker-compose.test.yml up --abort-on-container-exit
+docker compose -f docker-compose.test-1-auth.yml up --abort-on-container-exit
+docker compose -f docker-compose.test-2-settings.yml up --abort-on-container-exit
 ```
 
 The test suite includes:
@@ -37,7 +38,6 @@ The test suite includes:
 - Settings management tests (Proxmox credentials)
 - Validation checks
 - Login/Logout functionality
-- API Integration tests
 
 ### Test Environment Variables
 
@@ -66,9 +66,10 @@ The application is automatically deployed to a local server when all tests pass.
    - Docker and Docker Compose installed on target server
    - SSH access to target server
    - Jenkins credentials configured:
-     - proxman_server_ip: Target server IP address
-     - proxman_user: SSH username
-     - proxman_pw: SSH password
+     - proxman-deploy-credentials: Username/password credential containing:
+       - Username: SSH username for target server
+       - Password: SSH password for target server
+       - Description: Include target server IP in description
 
 2. Deployment Features:
    - Automatic container management
@@ -83,3 +84,13 @@ The application is automatically deployed to a local server when all tests pass.
    - Pulls latest Docker image
    - Gracefully stops existing containers
    - Starts new containers with updated image
+
+4. Jenkins Configuration:
+   - Add a Username with password credential in Jenkins:
+     1. Go to Jenkins > Manage Jenkins > Credentials
+     2. Click on (global) under Stores scoped to Jenkins
+     3. Click Add Credentials
+     4. Select Username with password
+     5. Set ID as 'proxman-deploy-credentials'
+     6. Enter SSH username and password
+     7. Add server IP to the description

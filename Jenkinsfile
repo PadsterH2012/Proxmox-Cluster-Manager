@@ -5,6 +5,7 @@ pipeline {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
         DOCKER_IMAGE_NAME = 'padster2012/proxmox-cluster-manager'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DEPLOY_CREDENTIALS = credentials('proxman-deploy-credentials')  // Single credential for all deployment info
     }
 
     stages {
@@ -58,34 +59,39 @@ pipeline {
             post {
                 always {
                     junit 'project/test-results-settings.xml'
-                    // Only stop the web container, keep db running
-                    sh 'docker compose -f project/docker-compose.test-2-settings.yml rm -f -s web || true'
+                    // Stop all containers after settings tests
+                    sh '''
+                        docker compose -f project/docker-compose.test-1-auth.yml down -v || true
+                        docker compose -f project/docker-compose.test-2-settings.yml down -v || true
+                    '''
                 }
             }
         }
 
-        // stage('Run API Integration Tests') {
-        //     steps {
-        //         dir('project') {
-        //             sh """
-        //                 docker compose -f docker-compose.test-3-api.yml up \
-        //                     --abort-on-container-exit \
-        //                     --exit-code-from web
-        //             """
-        //         }
-        //     }
-        //     post {
-        //         always {
-        //             junit 'project/test-results-api.xml'
-        //             // Stop all containers after API tests are done
-        //             sh '''
-        //                 docker compose -f project/docker-compose.test-1-auth.yml down -v || true
-        //                 docker compose -f project/docker-compose.test-2-settings.yml down -v || true
-        //                 docker compose -f project/docker-compose.test-3-api.yml down -v || true
-        //             '''
-        //         }
-        //     }
-        // }
+        /* Commenting out API tests for now
+        stage('Run API Integration Tests') {
+            steps {
+                dir('project') {
+                    sh """
+                        docker compose -f docker-compose.test-3-api.yml up \
+                            --abort-on-container-exit \
+                            --exit-code-from web
+                    """
+                }
+            }
+            post {
+                always {
+                    junit 'project/test-results-api.xml'
+                    // Stop all containers after API tests are done
+                    sh '''
+                        docker compose -f project/docker-compose.test-1-auth.yml down -v || true
+                        docker compose -f project/docker-compose.test-2-settings.yml down -v || true
+                        docker compose -f project/docker-compose.test-3-api.yml down -v || true
+                    '''
+                }
+            }
+        }
+        */
 
         stage('Push to Docker Hub') {
             steps {
@@ -115,42 +121,28 @@ services:
 EOL
                     '''
                     
-                    // Deploy to remote server using Jenkins credentials
-                    withCredentials([
-                        string(credentialsId: 'proxman_server_ip', variable: 'SERVER_IP'),
-                        string(credentialsId: 'proxman_user', variable: 'SERVER_USER'),
-                        string(credentialsId: 'proxman_pw', variable: 'SERVER_PASSWORD')
-                    ]) {
-                        // Install sshpass if not already installed
-                        sh 'which sshpass || apt-get update && apt-get install -y sshpass'
+                    // Install sshpass if not already installed
+                    sh 'which sshpass || apt-get update && apt-get install -y sshpass'
+                    
+                    // Deploy using credentials
+                    sh """
+                        sshpass -p "\${DEPLOY_CREDENTIALS_PSW}" ssh -o StrictHostKeyChecking=no \${DEPLOY_CREDENTIALS_USR}@\${DEPLOY_CREDENTIALS_IP} '
+                            mkdir -p ~/proxmox-cluster-manager
+                        '
                         
-                        // Create deployment directory
-                        sh """
-                            sshpass -p "\${SERVER_PASSWORD}" ssh -o StrictHostKeyChecking=no \${SERVER_USER}@\${SERVER_IP} '
-                                mkdir -p ~/proxmox-cluster-manager
-                            '
-                        """
+                        sshpass -p "\${DEPLOY_CREDENTIALS_PSW}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${DEPLOY_CREDENTIALS_USR}@\${DEPLOY_CREDENTIALS_IP}:~/proxmox-cluster-manager/docker-compose.yml
                         
-                        // Copy docker-compose file
-                        sh """
-                            sshpass -p "\${SERVER_PASSWORD}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${SERVER_USER}@\${SERVER_IP}:~/proxmox-cluster-manager/docker-compose.yml
-                        """
+                        sshpass -p "\${DEPLOY_CREDENTIALS_PSW}" ssh -o StrictHostKeyChecking=no \${DEPLOY_CREDENTIALS_USR}@\${DEPLOY_CREDENTIALS_IP} '
+                            cd ~/proxmox-cluster-manager && \
+                            docker compose pull && \
+                            docker compose down --remove-orphans && \
+                            docker compose up -d
+                        '
                         
-                        // Deploy using docker-compose
-                        sh """
-                            sshpass -p "\${SERVER_PASSWORD}" ssh -o StrictHostKeyChecking=no \${SERVER_USER}@\${SERVER_IP} '
-                                cd ~/proxmox-cluster-manager && \
-                                docker compose pull && \
-                                docker compose down --remove-orphans && \
-                                docker compose up -d
-                            '
-                        """
+                        rm deploy-compose.yml
                         
-                        // Clean up temporary file
-                        sh 'rm deploy-compose.yml'
-                        
-                        echo "Deployment completed successfully to \${SERVER_IP}"
-                    }
+                        echo "Deployment completed successfully to \${DEPLOY_CREDENTIALS_IP}"
+                    """
                 }
             }
         }

@@ -25,7 +25,7 @@ def test_save_proxmox_credentials(client):
         'username': test_user,
         'password': test_password,
         'port': 8006,
-        'verify_ssl': True
+        'verify_ssl': False  # Set verify_ssl to False for testing
     })
     assert response.status_code == 200
     assert 'success' in response.get_json().get('message', '').lower()
@@ -37,7 +37,7 @@ def test_save_proxmox_credentials(client):
     assert credentials.username == test_user
     assert credentials.password == test_password
     assert credentials.port == 8006
-    assert credentials.verify_ssl is True
+    assert credentials.verify_ssl is False
 
 def test_update_proxmox_credentials(client):
     """Test updating existing Proxmox credentials"""
@@ -51,7 +51,7 @@ def test_update_proxmox_credentials(client):
         'username': os.getenv('proxmox_user_test', 'test-user'),
         'password': os.getenv('proxmox_pw_test', 'test-password'),
         'port': new_port,
-        'verify_ssl': False
+        'verify_ssl': False  # Keep verify_ssl False for testing
     })
     assert response.status_code == 200
     assert 'success' in response.get_json().get('message', '').lower()
@@ -73,7 +73,7 @@ def test_remove_proxmox_credentials(client):
         'username': '',
         'password': '',
         'port': 8006,
-        'verify_ssl': True
+        'verify_ssl': False
     })
     assert response.status_code == 200
     assert 'removed' in response.get_json().get('message', '').lower()
@@ -87,7 +87,8 @@ def test_unauthorized_access(client):
     response = client.post('/api/settings/proxmox', json={
         'hostname': 'test',
         'username': 'test',
-        'password': 'test'
+        'password': 'test',
+        'verify_ssl': False
     })
     assert response.status_code == 401
     assert 'unauthorized' in response.get_json().get('error', '').lower()

@@ -39,7 +39,8 @@ pipeline {
             post {
                 always {
                     junit 'project/test-results-auth.xml'
-                    sh 'docker compose -f project/docker-compose.auth-test.yml down -v || true'
+                    // Only stop the web container, keep db running
+                    sh 'docker compose -f project/docker-compose.auth-test.yml rm -f -s web || true'
                 }
             }
         }
@@ -57,7 +58,11 @@ pipeline {
             post {
                 always {
                     junit 'project/test-results-settings.xml'
-                    sh 'docker compose -f project/docker-compose.settings-test.yml down -v || true'
+                    // Stop all containers after settings tests are done
+                    sh '''
+                        docker compose -f project/docker-compose.auth-test.yml down -v || true
+                        docker compose -f project/docker-compose.settings-test.yml down -v || true
+                    '''
                 }
             }
         }

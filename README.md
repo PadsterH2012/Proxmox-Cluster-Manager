@@ -33,9 +33,17 @@ docker compose -f docker-compose.test.yml up --abort-on-container-exit
 ```
 
 The test suite includes:
-- Authentication tests
+- Authentication tests (registration, login, logout)
+- Settings management tests (Proxmox credentials)
 - Validation checks
 - Login/Logout functionality
+
+### Test Environment Variables
+
+The following Jenkins environment variables are used for testing:
+- `proxmox_server_test`: Test Proxmox server hostname
+- `proxmox_user_test`: Test Proxmox username
+- `proxmox_pw_test`: Test Proxmox password
 
 ### Troubleshooting Test Imports
 

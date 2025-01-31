@@ -18,8 +18,11 @@ def app():
     with flask_app.app_context():
         db.create_all()
         yield flask_app
+        # Clean up database after each test
+        for table in reversed(db.metadata.sorted_tables):
+            db.session.execute(table.delete())
+        db.session.commit()
         db.session.remove()
-        db.drop_all()
 
 @pytest.fixture
 def client(app):

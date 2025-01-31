@@ -6,5 +6,6 @@ RUN apt-get update && apt-get install -y libpq-dev gcc && \
     chmod 777 /tmp/flask_session
 COPY . /app/
 WORKDIR /app
+ENV PYTHONPATH=/app:/app/project
 EXPOSE 5000
 CMD ["python", "app.py"]

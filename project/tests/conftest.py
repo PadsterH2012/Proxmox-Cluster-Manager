@@ -1,7 +1,12 @@
 import pytest
 import os
-from app import app as flask_app
-from models import db
+import sys
+
+# Add the project directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from project.app import app as flask_app
+from project.models import db
 
 @pytest.fixture
 def app():

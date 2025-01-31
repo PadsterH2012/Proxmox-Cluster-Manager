@@ -8,8 +8,9 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./tests:/app/tests
-    command: ["pytest", "tests/", "-v", "--junitxml=test-results.xml"]
+      - .:/app
+    working_dir: /app
+    command: ["pytest", "project/tests/", "-v", "--junitxml=test-results.xml"]
 
   db:
     image: postgres:13

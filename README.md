@@ -37,6 +37,14 @@ The test suite includes:
 - Validation checks
 - Login/Logout functionality
 
+### Troubleshooting Test Imports
+
+If you encounter module import issues:
+- An `__init__.py` file has been added to the project directory to mark it as a Python package
+- The `PYTHONPATH` is set to `/app:/app/project` in the Dockerfile to ensure proper module resolution
+- Test imports now use `from project.app import app` instead of `from app import app`
+- Docker Compose test configuration updated to mount the entire project and use correct test path
+
 ### Continuous Integration
 
 Tests are automatically run as part of the Jenkins CI/CD pipeline for each build.

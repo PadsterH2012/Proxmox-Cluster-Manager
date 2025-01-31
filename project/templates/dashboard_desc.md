@@ -1,29 +1,13 @@
-# Dashboard Overview
+## Testing Infrastructure Improvements
 
-## Purpose
-The dashboard serves as a comprehensive monitoring and management interface for Proxmox cluster resources, providing real-time insights and control mechanisms.
+### Module Import Resolution
+- Added `__init__.py` to project directory to mark it as a Python package
+- Configured `PYTHONPATH` in Dockerfile to `/app`
+- Updated test import mechanism to use project-relative imports
+- Resolved Docker container testing import issues
 
-## Testing Coverage
-- Authentication tests implemented to validate user login/logout flows
-- Validation checks for user registration and access control
-- Continuous Integration (CI) pipeline includes automated testing
-
-## Key Features
-- Real-time VM and Container Status Tracking
-- Cluster Resource Utilization Metrics
-- Node Health Monitoring
-- Update and Maintenance Tracking
-
-## User Interface Components
-- Metric Cards displaying:
-  - Running VMs and Containers count
-  - Cluster CPU Usage Percentage
-  - Cluster Memory Utilization
-- Node Status Panels
-- Resource Allocation Visualizations
-
-## Interaction and Usability
-- Responsive design for various device sizes
-- Interactive elements for quick cluster management
-- Secure authentication mechanism
-- Intuitive navigation between different cluster management sections
+### Benefits
+- More robust test environment
+- Clearer module resolution
+- Improved compatibility with Docker-based testing
+- Simplified test configuration

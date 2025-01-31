@@ -164,12 +164,10 @@ EOL
 
     post {
         always {
-            node(any) {
-                dir('project') {
-                    sh 'docker compose down || true'  // Add || true to prevent failure if containers aren't running
-                }
-                sh 'docker logout || true'
+            dir('project') {
+                sh 'docker compose down || true'  // Add || true to prevent failure if containers aren't running
             }
+            sh 'docker logout || true'
         }
         failure {
             echo 'The Pipeline failed :('

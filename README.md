@@ -65,11 +65,10 @@ The application is automatically deployed to a local server when all tests pass.
 1. Requirements:
    - Docker and Docker Compose installed on target server
    - SSH access to target server
-   - Jenkins credentials configured:
-     - proxman-deploy-credentials: Username/password credential containing:
-       - Username: SSH username for target server
-       - Password: SSH password for target server
-       - Description: Include target server IP in description
+   - Jenkins environment variables configured:
+     - proxman_server_ip: Target server IP address
+     - proxman_user: SSH username
+     - proxman_pw: SSH password
 
 2. Deployment Features:
    - Automatic container management
@@ -86,11 +85,11 @@ The application is automatically deployed to a local server when all tests pass.
    - Starts new containers with updated image
 
 4. Jenkins Configuration:
-   - Add a Username with password credential in Jenkins:
-     1. Go to Jenkins > Manage Jenkins > Credentials
-     2. Click on (global) under Stores scoped to Jenkins
-     3. Click Add Credentials
-     4. Select Username with password
-     5. Set ID as 'proxman-deploy-credentials'
-     6. Enter SSH username and password
-     7. Add server IP to the description
+   - Add environment variables in Jenkins:
+     1. Go to Jenkins > Manage Jenkins > System
+     2. Scroll to Global properties
+     3. Check "Environment variables"
+     4. Add the following variables:
+        - proxman_server_ip: Target server IP
+        - proxman_user: SSH username
+        - proxman_pw: SSH password

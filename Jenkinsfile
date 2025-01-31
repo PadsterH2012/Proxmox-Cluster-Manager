@@ -103,25 +103,11 @@ pipeline {
         }
 
         stage('Deploy to Local Server') {
-            when {
-                expression {
-                    // Only run deployment if credentials are available
-                    try {
-                        withCredentials([usernamePassword(credentialsId: 'proxman-deploy-credentials', usernameVariable: 'DEPLOY_USER', passwordVariable: 'DEPLOY_PASS')]) {
-                            return true
-                        }
-                    } catch (e) {
-                        echo "Skipping deployment: proxman-deploy-credentials not configured"
-                        return false
-                    }
-                }
-            }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'proxman-deploy-credentials', usernameVariable: 'DEPLOY_USER', passwordVariable: 'DEPLOY_PASS')]) {
-                        // Create a temporary docker-compose file with environment variables
-                        sh '''
-                            cat > deploy-compose.yml << 'EOL'
+                    // Create a temporary docker-compose file with environment variables
+                    sh '''
+                        cat > deploy-compose.yml << 'EOL'
 version: '3'
 services:
   web:
@@ -132,31 +118,30 @@ services:
       - FLASK_ENV=production
     restart: unless-stopped
 EOL
-                        '''
+                    '''
+                    
+                    // Install sshpass if not already installed
+                    sh 'which sshpass || apt-get update && apt-get install -y sshpass'
+                    
+                    // Deploy using environment variables
+                    sh """
+                        sshpass -p "\${proxman_pw}" ssh -o StrictHostKeyChecking=no \${proxman_user}@\${proxman_server_ip} '
+                            mkdir -p ~/proxmox-cluster-manager
+                        '
                         
-                        // Install sshpass if not already installed
-                        sh 'which sshpass || apt-get update && apt-get install -y sshpass'
+                        sshpass -p "\${proxman_pw}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${proxman_user}@\${proxman_server_ip}:~/proxmox-cluster-manager/docker-compose.yml
                         
-                        // Deploy using credentials
-                        sh """
-                            sshpass -p "\${DEPLOY_PASS}" ssh -o StrictHostKeyChecking=no \${DEPLOY_USER}@localhost '
-                                mkdir -p ~/proxmox-cluster-manager
-                            '
-                            
-                            sshpass -p "\${DEPLOY_PASS}" scp -o StrictHostKeyChecking=no deploy-compose.yml \${DEPLOY_USER}@localhost:~/proxmox-cluster-manager/docker-compose.yml
-                            
-                            sshpass -p "\${DEPLOY_PASS}" ssh -o StrictHostKeyChecking=no \${DEPLOY_USER}@localhost '
-                                cd ~/proxmox-cluster-manager && \
-                                docker compose pull && \
-                                docker compose down --remove-orphans && \
-                                docker compose up -d
-                            '
-                            
-                            rm deploy-compose.yml
-                            
-                            echo "Deployment completed successfully"
-                        """
-                    }
+                        sshpass -p "\${proxman_pw}" ssh -o StrictHostKeyChecking=no \${proxman_user}@\${proxman_server_ip} '
+                            cd ~/proxmox-cluster-manager && \
+                            docker compose pull && \
+                            docker compose down --remove-orphans && \
+                            docker compose up -d
+                        '
+                        
+                        rm deploy-compose.yml
+                        
+                        echo "Deployment completed successfully to \${proxman_server_ip}"
+                    """
                 }
             }
         }

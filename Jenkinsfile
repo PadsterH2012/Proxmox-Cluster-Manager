@@ -58,10 +58,30 @@ pipeline {
             post {
                 always {
                     junit 'project/test-results-settings.xml'
-                    // Stop all containers after settings tests are done
+                    // Only stop the web container, keep db running
+                    sh 'docker compose -f project/docker-compose.test-2-settings.yml rm -f -s web || true'
+                }
+            }
+        }
+
+        stage('Run API Integration Tests') {
+            steps {
+                dir('project') {
+                    sh """
+                        docker compose -f docker-compose.test-3-api.yml up \
+                            --abort-on-container-exit \
+                            --exit-code-from web
+                    """
+                }
+            }
+            post {
+                always {
+                    junit 'project/test-results-api.xml'
+                    // Stop all containers after API tests are done
                     sh '''
                         docker compose -f project/docker-compose.test-1-auth.yml down -v || true
                         docker compose -f project/docker-compose.test-2-settings.yml down -v || true
+                        docker compose -f project/docker-compose.test-3-api.yml down -v || true
                     '''
                 }
             }

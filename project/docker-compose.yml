@@ -1,6 +1,4 @@
-version: '3.8'
-
-services:
+0services:
   web:
     build: .
     ports:

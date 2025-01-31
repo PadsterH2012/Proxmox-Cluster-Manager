@@ -1,0 +1,24 @@
+services:
+  web:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/test_db
+      - FLASK_ENV=testing
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./tests:/app/tests
+    command: ["pytest", "tests/", "-v", "--junitxml=test-results.xml"]
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=test_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

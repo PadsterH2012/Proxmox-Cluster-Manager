@@ -41,8 +41,8 @@ The test suite includes:
 
 If you encounter module import issues:
 - An `__init__.py` file has been added to the project directory to mark it as a Python package
-- The `PYTHONPATH` is set to `/app:/app/project` in the Dockerfile to ensure proper module resolution
-- Test imports now use `from project.app import app` instead of `from app import app`
+- The `PYTHONPATH` is set to `/app:/app/project:/Proxmox_Cluster_Manager` in the Dockerfile to ensure proper module resolution
+- Test imports now use `from Proxmox_Cluster_Manager.project.app import app` 
 - Docker Compose test configuration updated to mount the entire project and use correct test path
 
 ### Continuous Integration

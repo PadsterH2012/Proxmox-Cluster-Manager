@@ -26,6 +26,24 @@ pipeline {
             }
         }
 
+        stage('Run Tests') {
+            steps {
+                dir('project') {
+                    sh """
+                        docker compose -f docker-compose.test.yml up \
+                            --abort-on-container-exit \
+                            --exit-code-from web
+                    """
+                }
+            }
+            post {
+                always {
+                    junit 'project/test-results.xml'
+                    sh 'docker compose -f project/docker-compose.test.yml down -v || true'
+                }
+            }
+        }
+
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
@@ -41,21 +59,6 @@ pipeline {
                 dir('project') {
                     sh 'docker compose --version'  // Check if docker-compose is installed.
                     sh 'docker compose up -d'
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                script {
-                    // Wait for the application to start
-                    sh 'sleep 30'
-
-                    // Basic health check
-                    sh 'curl -f http://localhost:5000/ || exit 1'
-
-                    // Add more comprehensive tests here
-                    // sh 'docker-compose exec backend pytest'
                 }
             }
         }

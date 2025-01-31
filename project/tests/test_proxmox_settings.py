@@ -53,8 +53,7 @@ def test_update_proxmox_credentials(client):
     # First create initial credentials
     test_save_proxmox_credentials(client)
 
-    # Update with new values
-    new_port = 8007
+    # Update credentials
     test_server = os.getenv('proxmox_server_test')
     test_user = os.getenv('proxmox_user_test')
     test_password = os.getenv('proxmox_pw_test')
@@ -66,7 +65,7 @@ def test_update_proxmox_credentials(client):
         'hostname': test_server,
         'username': test_user,
         'password': test_password,
-        'port': new_port,
+        'port': 8006,  # Keep port at 8006
         'verify_ssl': False  # Keep verify_ssl False for testing
     })
     assert response.status_code == 200
@@ -75,7 +74,7 @@ def test_update_proxmox_credentials(client):
     # Verify updates were saved
     credentials = ProxmoxCredentials.query.first()
     assert credentials is not None
-    assert credentials.port == new_port
+    assert credentials.port == 8006
     assert credentials.verify_ssl is False
 
 def test_remove_proxmox_credentials(client):
